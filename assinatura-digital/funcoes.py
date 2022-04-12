@@ -1,10 +1,15 @@
 from Crypto.Hash import SHA1
+from Crypto.Hash import SHA224
 from Crypto.Hash import SHA256
+from Crypto.Hash import SHA384
+from Crypto.Hash import SHA512
 from Crypto import Random
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 import base64
 import pickle
+
+from regex import P
 
 class Funcoes:
     def __init__(self):
@@ -13,21 +18,46 @@ class Funcoes:
         self.assinatura = ''
         self.geraKeys()
 
-    def verifica(self, exported_key):
-        data = self.assinatura[0]
-        signature = self.assinatura[1]
+    def verifica(self, exported_key, mensagem, assinatura, tipoSHA):
+        data = mensagem
+        signature = assinatura
         key = RSA.importKey(exported_key)
-        h = SHA256.new(pickle.dumps(data))
+        
+        if tipoSHA == 1:
+            h = SHA256.new(pickle.dumps(data))
+        elif tipoSHA == 2:
+            h = SHA256.new(pickle.dumps(data))
+        elif tipoSHA == 3:
+            h = SHA256.new(pickle.dumps(data))
+        elif tipoSHA == 4:
+            h = SHA256.new(pickle.dumps(data))
+        elif tipoSHA == 5:
+            h = SHA256.new(pickle.dumps(data))
+        else:
+            h = SHA256.new(pickle.dumps(data))
+
+
         return PKCS1_v1_5.new(key).verify(h, signature)
 
-    def assinar(self, data, exported_key):
+    def assinar(self, data, exported_key, tipoSHA):
         key = RSA.importKey(exported_key)
         signed_data = []
         signed_data.append(data)
-        signed_data.append(PKCS1_v1_5.new(key).sign(SHA256.new(pickle.dumps(data))))
+        if tipoSHA == 1:
+            signed_data.append(PKCS1_v1_5.new(key).sign(SHA256.new(pickle.dumps(data))))
+        elif tipoSHA == 2:
+            signed_data.append(PKCS1_v1_5.new(key).sign(SHA1.new(pickle.dumps(data))))
+        elif tipoSHA == 3:
+            signed_data.append(PKCS1_v1_5.new(key).sign(SHA224.new(pickle.dumps(data))))
+        elif tipoSHA == 4:
+            signed_data.append(PKCS1_v1_5.new(key).sign(SHA384.new(pickle.dumps(data))))
+        elif tipoSHA == 5:
+            signed_data.append(PKCS1_v1_5.new(key).sign(SHA512.new(pickle.dumps(data))))
+        else:
+            signed_data.append(PKCS1_v1_5.new(key).sign(SHA256.new(pickle.dumps(data))))
         with open("assinatura.txt", "wb") as f:
-            f.write(b"--- ASSINATURA BASE64 ---\n")
             f.write(base64.b64encode(signed_data[1]))
+        print("\nAssinatura: ", base64.b64encode(signed_data[1]).decode('utf-8'))
         return signed_data
 
     def geraKeys(self):
@@ -48,16 +78,11 @@ class Funcoes:
 
         self.privateKey = key
 
+    def assinaDocumento(self, mensagem, chave, tipoSHA=1):
+        self.assinatura = self.assinar(mensagem, chave, tipoSHA)
 
-    def assinaDocumento(self, mensagem, tipoSHA=0):
-        if tipoSHA == 0:
-            #hash = SHA256.new(mensagem.encode("utf-8")).digest()
-            privateKey = self.privateKey.exportKey()
-            self.assinatura = self.assinar(mensagem, privateKey)
-
-    def verificaAutenticidade(self):
-        #self.assinatura[0] = 'Some dataaaaaaaa'             # Succeeds
-        self.assinatura[0] = 'Testando a criptogfia dessa mensagem que diz muita coisa'        # Fails
-        keyPub = self.privateKey.publickey().exportKey()
-        verified = self.verifica(keyPub)
-        print(verified)
+    def verificaAutenticidade(self, mensagem, publicKey, assinatura, tipoSHA=1):
+    
+        assinatura = base64.b64decode(assinatura)
+        verified = self.verifica(publicKey, mensagem, assinatura, tipoSHA)
+        print("\nVerificação da mensagem: ", verified)
